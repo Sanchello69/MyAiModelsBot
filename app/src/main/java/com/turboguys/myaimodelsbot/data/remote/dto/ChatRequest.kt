@@ -6,7 +6,9 @@ data class ChatRequest(
     @SerializedName("model")
     val model: String,
     @SerializedName("messages")
-    val messages: List<MessageDto>
+    val messages: List<MessageDto>,
+    @SerializedName("max_tokens")
+    val maxTokens: Int? = null
 )
 
 data class MessageDto(

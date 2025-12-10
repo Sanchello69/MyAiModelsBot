@@ -37,6 +37,10 @@ class ChatViewModel(
                 }
             }
 
+            is ChatEvent.OnMaxTokensChange -> {
+                _uiState.update { it.copy(maxTokens = event.maxTokens) }
+            }
+
             ChatEvent.OnErrorDismiss -> {
                 _uiState.update { it.copy(error = null) }
             }
@@ -66,7 +70,8 @@ class ChatViewModel(
         viewModelScope.launch {
             val result = sendMessageUseCase(
                 model = currentState.selectedModel,
-                messages = _uiState.value.messages
+                messages = _uiState.value.messages,
+                maxTokens = currentState.maxTokens
             )
 
             result.fold(

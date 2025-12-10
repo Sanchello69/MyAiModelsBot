@@ -15,12 +15,14 @@ class ChatRepositoryImpl(
 
     override suspend fun sendMessage(
         model: AiModel,
-        messages: List<Message>
+        messages: List<Message>,
+        maxTokens: Int?
     ): Result<Message> {
         return try {
             val request = ChatRequest(
                 model = model.modelId,
-                messages = messages.map { it.toDto() }
+                messages = messages.map { it.toDto() },
+                maxTokens = maxTokens
             )
 
             val response = apiService.sendMessage(request)

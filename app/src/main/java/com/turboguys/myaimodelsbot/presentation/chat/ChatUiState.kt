@@ -8,5 +8,6 @@ data class ChatUiState(
     val selectedModel: AiModel = AiModel.DEEPSEEK_CHIMERA,
     val isLoading: Boolean = false,
     val error: String? = null,
-    val inputText: String = ""
+    val inputText: String = "",
+    val maxTokens: Int = 1000 // Значение по умолчанию
 )

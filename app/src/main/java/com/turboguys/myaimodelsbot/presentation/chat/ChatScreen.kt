@@ -26,6 +26,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -85,7 +86,17 @@ fun ChatScreen(
                 onModelSelect = { viewModel.onEvent(ChatEvent.OnModelSelect(it)) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 16.dp)
+            )
+
+            TokensLimitSelector(
+                maxTokens = uiState.maxTokens,
+                onMaxTokensChange = { viewModel.onEvent(ChatEvent.OnMaxTokensChange(it)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 8.dp)
             )
 
             MessageList(
@@ -147,6 +158,55 @@ fun ModelSelector(
                     }
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun TokensLimitSelector(
+    maxTokens: Int,
+    onMaxTokensChange: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Max Tokens",
+                style = MaterialTheme.typography.labelMedium
+            )
+            Text(
+                text = maxTokens.toString(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+
+        Slider(
+            value = maxTokens.toFloat(),
+            onValueChange = { onMaxTokensChange(it.toInt()) },
+            valueRange = 100f..4000f,
+            steps = 38, // Шаги по 100 токенов
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "100",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = "4000",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

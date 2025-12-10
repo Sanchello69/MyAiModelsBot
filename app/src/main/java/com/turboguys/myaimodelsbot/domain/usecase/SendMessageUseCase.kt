@@ -9,8 +9,9 @@ class SendMessageUseCase(
 ) {
     suspend operator fun invoke(
         model: AiModel,
-        messages: List<Message>
+        messages: List<Message>,
+        maxTokens: Int? = null
     ): Result<Message> {
-        return repository.sendMessage(model, messages)
+        return repository.sendMessage(model, messages, maxTokens)
     }
 }

@@ -6,6 +6,7 @@ import com.turboguys.myaimodelsbot.domain.model.Message
 interface ChatRepository {
     suspend fun sendMessage(
         model: AiModel,
-        messages: List<Message>
+        messages: List<Message>,
+        maxTokens: Int? = null
     ): Result<Message>
 }
