@@ -9,5 +9,6 @@ data class ChatUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val inputText: String = "",
-    val maxTokens: Int = 1000 // Значение по умолчанию
+    val maxTokens: Int = 1000, // Значение по умолчанию, 0 = без ограничения
+    val compressionEnabled: Boolean = false // Включение/выключение сжатия истории
 )

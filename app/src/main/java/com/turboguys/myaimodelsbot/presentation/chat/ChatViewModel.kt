@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.turboguys.myaimodelsbot.domain.model.Message
 import com.turboguys.myaimodelsbot.domain.model.MessageRole
+import com.turboguys.myaimodelsbot.domain.usecase.CompressHistoryUseCase
 import com.turboguys.myaimodelsbot.domain.usecase.SendMessageUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,7 +13,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class ChatViewModel(
-    private val sendMessageUseCase: SendMessageUseCase
+    private val sendMessageUseCase: SendMessageUseCase,
+    private val compressHistoryUseCase: CompressHistoryUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -39,6 +41,10 @@ class ChatViewModel(
 
             is ChatEvent.OnMaxTokensChange -> {
                 _uiState.update { it.copy(maxTokens = event.maxTokens) }
+            }
+
+            is ChatEvent.OnCompressionToggle -> {
+                _uiState.update { it.copy(compressionEnabled = event.enabled) }
             }
 
             ChatEvent.OnErrorDismiss -> {
@@ -68,17 +74,33 @@ class ChatViewModel(
         }
 
         viewModelScope.launch {
+            // Используем текущую историю для отправки
+            val messagesToSend = _uiState.value.messages
+
             val result = sendMessageUseCase(
                 model = currentState.selectedModel,
-                messages = _uiState.value.messages,
-                maxTokens = currentState.maxTokens
+                messages = messagesToSend,
+                maxTokens = if (currentState.maxTokens == 0) null else currentState.maxTokens
             )
 
             result.fold(
                 onSuccess = { assistantMessage ->
+                    // Добавляем ответ ассистента
+                    val updatedMessages = _uiState.value.messages + assistantMessage
+
+                    // Применяем сжатие к обновленной истории, если включено
+                    val finalMessages = if (currentState.compressionEnabled && updatedMessages.size >= 10) {
+                        compressHistoryUseCase(
+                            model = currentState.selectedModel,
+                            messages = updatedMessages
+                        )
+                    } else {
+                        updatedMessages
+                    }
+
                     _uiState.update {
                         it.copy(
-                            messages = it.messages + assistantMessage,
+                            messages = finalMessages,
                             isLoading = false
                         )
                     }

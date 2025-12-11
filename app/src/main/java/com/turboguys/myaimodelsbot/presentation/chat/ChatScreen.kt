@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -93,6 +94,15 @@ fun ChatScreen(
             TokensLimitSelector(
                 maxTokens = uiState.maxTokens,
                 onMaxTokensChange = { viewModel.onEvent(ChatEvent.OnMaxTokensChange(it)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 8.dp)
+            )
+
+            CompressionToggle(
+                compressionEnabled = uiState.compressionEnabled,
+                onCompressionToggle = { viewModel.onEvent(ChatEvent.OnCompressionToggle(it)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
@@ -179,7 +189,7 @@ fun TokensLimitSelector(
                 style = MaterialTheme.typography.labelMedium
             )
             Text(
-                text = maxTokens.toString(),
+                text = if (maxTokens == 0) "Без ограничения" else maxTokens.toString(),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -188,8 +198,8 @@ fun TokensLimitSelector(
         Slider(
             value = maxTokens.toFloat(),
             onValueChange = { onMaxTokensChange(it.toInt()) },
-            valueRange = 100f..4000f,
-            steps = 38, // Шаги по 100 токенов
+            valueRange = 0f..4000f,
+            steps = 40, // Шаги по 100 токенов (0, 100, 200, ..., 4000)
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -198,7 +208,7 @@ fun TokensLimitSelector(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "100",
+                text = "Без ограничения",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -308,6 +318,35 @@ fun MessageItem(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun CompressionToggle(
+    compressionEnabled: Boolean,
+    onCompressionToggle: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = "Сжатие истории",
+                style = MaterialTheme.typography.labelMedium
+            )
+            Text(
+                text = "Автоматически создавать резюме каждые 10 сообщений",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Checkbox(
+            checked = compressionEnabled,
+            onCheckedChange = onCompressionToggle
+        )
     }
 }
 
