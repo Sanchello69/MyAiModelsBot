@@ -6,6 +6,6 @@ import org.koin.dsl.module
 
 val presentationModule = module {
     viewModel {
-        ChatViewModel(get(), get())
+        ChatViewModel(get(), get(), get(), get())
     }
 }

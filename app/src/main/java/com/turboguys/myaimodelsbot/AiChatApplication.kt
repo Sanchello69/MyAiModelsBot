@@ -1,6 +1,7 @@
 package com.turboguys.myaimodelsbot
 
 import android.app.Application
+import com.turboguys.myaimodelsbot.di.databaseModule
 import com.turboguys.myaimodelsbot.di.domainModule
 import com.turboguys.myaimodelsbot.di.networkModule
 import com.turboguys.myaimodelsbot.di.presentationModule
@@ -19,6 +20,7 @@ class AiChatApplication : Application() {
             androidLogger(Level.ERROR)
             androidContext(this@AiChatApplication)
             modules(
+                databaseModule,
                 networkModule,
                 repositoryModule,
                 domainModule,

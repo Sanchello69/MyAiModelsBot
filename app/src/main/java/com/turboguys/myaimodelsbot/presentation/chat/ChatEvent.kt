@@ -8,5 +8,6 @@ sealed class ChatEvent {
     data class OnModelSelect(val model: AiModel) : ChatEvent()
     data class OnMaxTokensChange(val maxTokens: Int) : ChatEvent()
     data class OnCompressionToggle(val enabled: Boolean) : ChatEvent()
+    data object OnClearHistory : ChatEvent()
     data object OnErrorDismiss : ChatEvent()
 }
