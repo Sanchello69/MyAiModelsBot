@@ -11,6 +11,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Тест MCP подключения (проверьте Logcat для результатов)
+        McpTestExample.testMcpConnection()
+
         setContent {
             MyAiModelsBotTheme {
                 ChatScreen()

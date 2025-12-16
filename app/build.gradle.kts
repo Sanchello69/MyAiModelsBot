@@ -86,6 +86,11 @@ dependencies {
     implementation("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
 
+    // SSE for MCP
+    implementation("com.launchdarkly:okhttp-eventsource:4.1.1")
+
+    // JSON-RPC (уже есть Gson)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
