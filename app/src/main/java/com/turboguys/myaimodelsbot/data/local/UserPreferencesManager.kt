@@ -21,10 +21,10 @@ class UserPreferencesManager(context: Context) {
             try {
                 AiModel.valueOf(modelName)
             } catch (e: IllegalArgumentException) {
-                AiModel.DEEPSEEK_CHIMERA // Модель по умолчанию
+                AiModel.DEEPSEEK_V3 // Модель по умолчанию
             }
         } else {
-            AiModel.DEEPSEEK_CHIMERA // Модель по умолчанию
+            AiModel.DEEPSEEK_V3 // Модель по умолчанию
         }
     }
 

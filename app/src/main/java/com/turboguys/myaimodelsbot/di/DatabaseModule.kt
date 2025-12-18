@@ -24,6 +24,10 @@ val databaseModule = module {
     }
 
     single {
+        get<AppDatabase>().bitcoinPriceDao()
+    }
+
+    single {
         ChatLocalDataSource(get())
     }
 

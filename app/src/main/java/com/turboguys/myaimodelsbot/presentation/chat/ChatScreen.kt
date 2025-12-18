@@ -117,22 +117,13 @@ fun ChatScreen(
                 .padding(paddingValues)
                 .imePadding()
         ) {
-            ModelSelector(
-                selectedModel = uiState.selectedModel,
-                onModelSelect = { viewModel.onEvent(ChatEvent.OnModelSelect(it)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 16.dp)
-            )
-
             TokensLimitSelector(
                 maxTokens = uiState.maxTokens,
                 onMaxTokensChange = { viewModel.onEvent(ChatEvent.OnMaxTokensChange(it)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
-                    .padding(top = 8.dp)
+                    .padding(top = 16.dp)
             )
 
             CompressionToggle(
@@ -161,48 +152,6 @@ fun ChatScreen(
                     .fillMaxWidth()
                     .padding(16.dp)
             )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ModelSelector(
-    selectedModel: AiModel,
-    onModelSelect: (AiModel) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it },
-        modifier = modifier
-    ) {
-        OutlinedTextField(
-            value = selectedModel.displayName,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("AI Model") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .menuAnchor()
-        )
-
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            AiModel.entries.forEach { model ->
-                DropdownMenuItem(
-                    text = { Text(model.displayName) },
-                    onClick = {
-                        onModelSelect(model)
-                        expanded = false
-                    }
-                )
-            }
         }
     }
 }

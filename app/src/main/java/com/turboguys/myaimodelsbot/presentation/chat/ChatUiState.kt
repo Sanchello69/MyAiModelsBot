@@ -5,7 +5,7 @@ import com.turboguys.myaimodelsbot.domain.model.Message
 
 data class ChatUiState(
     val messages: List<Message> = emptyList(),
-    val selectedModel: AiModel = AiModel.DEEPSEEK_CHIMERA,
+    val selectedModel: AiModel = AiModel.DEEPSEEK_V3,
     val isLoading: Boolean = false,
     val error: String? = null,
     val inputText: String = "",
