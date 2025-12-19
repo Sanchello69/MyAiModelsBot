@@ -23,6 +23,6 @@ fun MessageDto.toDomain(): Message {
             "system" -> MessageRole.SYSTEM
             else -> MessageRole.ASSISTANT
         },
-        content = content
+        content = content ?: "" // Обрабатываем null для tool calls
     )
 }

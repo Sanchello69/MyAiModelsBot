@@ -11,8 +11,9 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.turboguys.myaimodelsbot.R
+import com.turboguys.myaimodelsbot.data.remote.mcp.SimpleMcpClient
 import com.turboguys.myaimodelsbot.domain.repository.BitcoinRepository
-import com.turboguys.myaimodelsbot.domain.usecase.AnalyzeBitcoinChangeUseCase
+import com.turboguys.myaimodelsbot.domain.usecase.AnalyzeBitcoinWithToolsUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -24,7 +25,8 @@ import org.koin.android.ext.android.inject
 class BitcoinMonitorService : Service() {
 
     private val bitcoinRepository: BitcoinRepository by inject()
-    private val analyzeBitcoinChangeUseCase: AnalyzeBitcoinChangeUseCase by inject()
+    private val analyzeBitcoinWithToolsUseCase: AnalyzeBitcoinWithToolsUseCase by inject()
+    private val mcpClient: SimpleMcpClient by inject()
 
     private val serviceJob = Job()
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
@@ -101,67 +103,61 @@ class BitcoinMonitorService : Service() {
         serviceScope.launch {
             while (isActive) {
                 try {
-                    // Получаем текущий курс
-                    val currentPriceResult = bitcoinRepository.fetchCurrentBitcoinPrice()
+                    // AI агент сам получит курс через MCP и проанализирует его
+                    val analysisResult = analyzeBitcoinWithToolsUseCase()
 
-                    currentPriceResult.onSuccess { currentPrice ->
+                    analysisResult.onSuccess { analysisText ->
+                        Log.d(TAG, "AI Analysis: $analysisText")
+
                         val timestamp = System.currentTimeMillis()
 
-                        // Получаем предыдущий курс
-                        val previousPrice = bitcoinRepository.getLatestPrice()
+                        // Получаем текущий и предыдущий курс
+                        val priceResult = bitcoinRepository.fetchCurrentBitcoinPrice()
+                        val currentPrice = priceResult.getOrNull() ?: 0.0
+                        val previousPriceEntity = bitcoinRepository.getLatestPrice()
+                        val previousPrice = previousPriceEntity?.price
 
-                        var analysis: String? = null
-
-                        // Если есть предыдущий курс, анализируем изменения
-                        if (previousPrice != null) {
-                            val analysisResult = analyzeBitcoinChangeUseCase(
-                                previousPrice = previousPrice.price,
-                                currentPrice = currentPrice
+                        // Сохраняем отчет в файл через File MCP сервер
+                        launch {
+                            val saveResult = mcpClient.saveBitcoinReport(
+                                content = analysisText,
+                                price = currentPrice,
+                                previousPrice = previousPrice
                             )
 
-                            analysisResult.onSuccess { analysisText ->
-                                analysis = analysisText
-                                Log.d(TAG, "Analysis: $analysisText")
-
-                                // Обновляем уведомление с кратким анализом
-                                val shortAnalysis = analysisText.take(50) + "..."
-                                updateNotification("BTC: $$currentPrice - $shortAnalysis")
-
-                                // Отправляем broadcast для обновления UI
-                                sendBroadcast(Intent(ACTION_BITCOIN_UPDATE).apply {
-                                    putExtra(EXTRA_PRICE, currentPrice)
-                                    putExtra(EXTRA_ANALYSIS, analysisText)
-                                    putExtra(EXTRA_TIMESTAMP, timestamp)
-                                })
+                            saveResult.onSuccess { saveResponse ->
+                                Log.d(TAG, "Report saved: $saveResponse")
                             }
 
-                            analysisResult.onFailure { error ->
-                                Log.e(TAG, "Analysis error", error)
+                            saveResult.onFailure { error ->
+                                Log.e(TAG, "Failed to save report", error)
                             }
-                        } else {
-                            // Первый запрос - просто сохраняем
-                            updateNotification("BTC: $$currentPrice (первая проверка)")
-
-                            sendBroadcast(Intent(ACTION_BITCOIN_UPDATE).apply {
-                                putExtra(EXTRA_PRICE, currentPrice)
-                                putExtra(EXTRA_ANALYSIS, "Первое измерение курса")
-                                putExtra(EXTRA_TIMESTAMP, timestamp)
-                            })
                         }
+
+                        // Обновляем уведомление с кратким анализом
+                        val shortAnalysis = analysisText.take(50) + "..."
+                        updateNotification("BTC: $$currentPrice - $shortAnalysis")
+
+                        // Отправляем broadcast для обновления UI
+                        sendBroadcast(Intent(ACTION_BITCOIN_UPDATE).apply {
+                            putExtra(EXTRA_PRICE, currentPrice)
+                            putExtra(EXTRA_ANALYSIS, analysisText)
+                            putExtra(EXTRA_TIMESTAMP, timestamp)
+                        })
 
                         // Сохраняем курс в БД
                         bitcoinRepository.saveBitcoinPrice(
                             price = currentPrice,
                             timestamp = timestamp,
-                            analysis = analysis
+                            analysis = analysisText
                         )
 
                         Log.d(TAG, "Bitcoin price updated: $currentPrice")
                     }
 
-                    currentPriceResult.onFailure { error ->
-                        Log.e(TAG, "Failed to fetch Bitcoin price", error)
-                        updateNotification("Ошибка получения курса")
+                    analysisResult.onFailure { error ->
+                        Log.e(TAG, "AI Analysis error", error)
+                        updateNotification("Ошибка анализа: ${error.message}")
                     }
 
                 } catch (e: Exception) {
