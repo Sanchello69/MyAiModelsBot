@@ -7,7 +7,7 @@ import com.turboguys.myaimodelsbot.data.local.UserPreferencesManager
 import com.turboguys.myaimodelsbot.domain.model.Message
 import com.turboguys.myaimodelsbot.domain.model.MessageRole
 import com.turboguys.myaimodelsbot.domain.usecase.CompressHistoryUseCase
-import com.turboguys.myaimodelsbot.domain.usecase.SendMessageUseCase
+import com.turboguys.myaimodelsbot.domain.usecase.SendMessageWithToolsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class ChatViewModel(
-    private val sendMessageUseCase: SendMessageUseCase,
+    private val sendMessageWithToolsUseCase: SendMessageWithToolsUseCase,
     private val compressHistoryUseCase: CompressHistoryUseCase,
     private val localDataSource: ChatLocalDataSource,
     private val preferencesManager: UserPreferencesManager
@@ -123,7 +123,7 @@ class ChatViewModel(
             // Используем текущую историю для отправки
             val messagesToSend = _uiState.value.messages
 
-            val result = sendMessageUseCase(
+            val result = sendMessageWithToolsUseCase(
                 model = currentState.selectedModel,
                 messages = messagesToSend,
                 maxTokens = if (currentState.maxTokens == 0) null else currentState.maxTokens

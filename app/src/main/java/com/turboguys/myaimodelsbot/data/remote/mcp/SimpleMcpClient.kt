@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit
  * Упрощенный MCP клиент для работы с локальным HTTP сервером
  */
 class SimpleMcpClient(
-    private val baseUrl: String = "http://192.168.1.67:3000" // IP адрес Mac в локальной сети
+    private val baseUrl: String = "http://192.168.1.12:3000" // IP адрес Mac в локальной сети
 ) {
     private val gson = Gson()
     private val client = OkHttpClient.Builder()
@@ -231,6 +231,222 @@ class SimpleMcpClient(
             Result.success(text ?: "Report saved")
         } catch (e: Exception) {
             Log.e(TAG, "Error saving report", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Получить список инструментов File MCP сервера
+     */
+    suspend fun listFileTools(): Result<List<McpTool>> = withContext(Dispatchers.IO) {
+        try {
+            val requestBody = mapOf(
+                "jsonrpc" to "2.0",
+                "id" to "list-file-tools-1",
+                "method" to "tools/list",
+                "params" to emptyMap<String, Any>()
+            )
+
+            val request = Request.Builder()
+                .url("$baseUrl/mcp/file/tools/list")
+                .post(gson.toJson(requestBody).toRequestBody("application/json".toMediaType()))
+                .build()
+
+            val response = client.newCall(request).execute()
+            val responseBody = response.body?.string()
+
+            Log.d(TAG, "List file tools response: $responseBody")
+
+            if (!response.isSuccessful) {
+                return@withContext Result.failure(
+                    Exception("HTTP error: ${response.code} $responseBody")
+                )
+            }
+
+            if (responseBody == null) {
+                return@withContext Result.failure(Exception("Empty response"))
+            }
+
+            val jsonResponse = gson.fromJson(responseBody, Map::class.java)
+            val result = jsonResponse["result"] as? Map<*, *>
+            val tools = result?.get("tools") as? List<*>
+
+            val mcpTools = tools?.mapNotNull { tool ->
+                (tool as? Map<*, *>)?.let { toolMap ->
+                    McpTool(
+                        name = toolMap["name"] as? String ?: "",
+                        description = toolMap["description"] as? String,
+                        inputSchema = toolMap["inputSchema"] as? Map<String, Any>
+                    )
+                }
+            } ?: emptyList()
+
+            Result.success(mcpTools)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error listing file tools", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Вызвать инструмент File MCP сервера
+     */
+    suspend fun callFileTool(toolName: String, arguments: Map<String, Any>): Result<String> =
+        withContext(Dispatchers.IO) {
+        try {
+            val requestBody = mapOf(
+                "jsonrpc" to "2.0",
+                "id" to "call-file-tool-${System.currentTimeMillis()}",
+                "method" to "tools/call",
+                "params" to mapOf(
+                    "name" to toolName,
+                    "arguments" to arguments
+                )
+            )
+
+            val request = Request.Builder()
+                .url("$baseUrl/mcp/file/tools/call")
+                .post(gson.toJson(requestBody).toRequestBody("application/json".toMediaType()))
+                .build()
+
+            val response = client.newCall(request).execute()
+            val responseBody = response.body?.string()
+
+            Log.d(TAG, "Call file tool response: $responseBody")
+
+            if (!response.isSuccessful) {
+                return@withContext Result.failure(
+                    Exception("HTTP error: ${response.code} $responseBody")
+                )
+            }
+
+            if (responseBody == null) {
+                return@withContext Result.failure(Exception("Empty response"))
+            }
+
+            val jsonResponse = gson.fromJson(responseBody, Map::class.java)
+            val result = jsonResponse["result"] as? Map<*, *>
+            val content = result?.get("content") as? List<*>
+            val textContent = content?.firstOrNull() as? Map<*, *>
+            val text = textContent?.get("text") as? String
+
+            Result.success(text ?: "No result")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error calling file tool", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Получить список инструментов Mobile MCP сервера
+     */
+    suspend fun listMobileTools(): Result<List<McpTool>> = withContext(Dispatchers.IO) {
+        try {
+            val requestBody = mapOf(
+                "jsonrpc" to "2.0",
+                "id" to "list-mobile-tools-1",
+                "method" to "tools/list",
+                "params" to emptyMap<String, Any>()
+            )
+
+            val request = Request.Builder()
+                .url("$baseUrl/mcp/mobile/tools/list")
+                .post(gson.toJson(requestBody).toRequestBody("application/json".toMediaType()))
+                .build()
+
+            val response = client.newCall(request).execute()
+            val responseBody = response.body?.string()
+
+            Log.d(TAG, "List mobile tools response: $responseBody")
+
+            if (!response.isSuccessful) {
+                return@withContext Result.failure(
+                    Exception("HTTP error: ${response.code} $responseBody")
+                )
+            }
+
+            if (responseBody == null) {
+                return@withContext Result.failure(Exception("Empty response"))
+            }
+
+            val jsonResponse = gson.fromJson(responseBody, Map::class.java)
+            val result = jsonResponse["result"] as? Map<*, *>
+            val tools = result?.get("tools") as? List<*>
+
+            val mcpTools = tools?.mapNotNull { tool ->
+                (tool as? Map<*, *>)?.let { toolMap ->
+                    McpTool(
+                        name = toolMap["name"] as? String ?: "",
+                        description = toolMap["description"] as? String,
+                        inputSchema = toolMap["inputSchema"] as? Map<String, Any>
+                    )
+                }
+            } ?: emptyList()
+
+            Result.success(mcpTools)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error listing mobile tools", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Вызвать инструмент Mobile MCP сервера
+     */
+    suspend fun callMobileTool(toolName: String, arguments: Map<String, Any>): Result<String> =
+        withContext(Dispatchers.IO) {
+        try {
+            val requestBody = mapOf(
+                "jsonrpc" to "2.0",
+                "id" to "call-mobile-tool-${System.currentTimeMillis()}",
+                "method" to "tools/call",
+                "params" to mapOf(
+                    "name" to toolName,
+                    "arguments" to arguments
+                )
+            )
+
+            val request = Request.Builder()
+                .url("$baseUrl/mcp/mobile/tools/call")
+                .post(gson.toJson(requestBody).toRequestBody("application/json".toMediaType()))
+                .build()
+
+            val response = client.newCall(request).execute()
+            val responseBody = response.body?.string()
+
+            Log.d(TAG, "Call mobile tool response: $responseBody")
+
+            if (!response.isSuccessful) {
+                return@withContext Result.failure(
+                    Exception("HTTP error: ${response.code} $responseBody")
+                )
+            }
+
+            if (responseBody == null) {
+                return@withContext Result.failure(Exception("Empty response"))
+            }
+
+            val jsonResponse = gson.fromJson(responseBody, Map::class.java)
+            val result = jsonResponse["result"] as? Map<*, *>
+            val content = result?.get("content") as? List<*>
+            val textContent = content?.firstOrNull() as? Map<*, *>
+            val text = textContent?.get("text") as? String
+
+            Result.success(text ?: "No result")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error calling mobile tool", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Получить список доступных мобильных устройств
+     */
+    suspend fun listMobileDevices(): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            callMobileTool("mobile_list_available_devices", mapOf("noParams" to emptyMap<String, Any>()))
+        } catch (e: Exception) {
+            Log.e(TAG, "Error listing mobile devices", e)
             Result.failure(e)
         }
     }
